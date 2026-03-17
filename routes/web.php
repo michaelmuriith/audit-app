@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MeetingMinuteController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -10,7 +12,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('audit-planning')->name('audit-planning.')->group(function () {
         Route::inertia('strategic-plan', 'audit-planning/strategic-plan')->name('strategic-plan');
         Route::inertia('risk-assessment', 'audit-planning/risk-assessment')->name('risk-assessment');
-        Route::inertia('meetings', 'audit-planning/meetings')->name('meetings');
+
+        Route::get('meetings/minutes', [MeetingMinuteController::class, 'index'])->name('meetings.minutes.index');
+        Route::resource('meetings', MeetingController::class);
+        Route::get('meetings/{meeting}/minutes', [MeetingMinuteController::class, 'show'])->name('meetings.minutes.show');
+        Route::post('meetings/minutes', [MeetingMinuteController::class, 'store'])->name('meetings.minutes.store');
+        Route::post('meeting-minutes/{minute}/review', [MeetingMinuteController::class, 'review'])->name('meetings.minutes.review');
+
         Route::inertia('annual-plan', 'audit-planning/annual-plan')->name('annual-plan');
     });
 

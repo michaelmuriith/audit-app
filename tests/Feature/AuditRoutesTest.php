@@ -12,7 +12,7 @@ test('authenticated users can visit all audit routes', function (string $route) 
     'dashboard',
     'audit-planning.strategic-plan',
     'audit-planning.risk-assessment',
-    'audit-planning.meetings',
+    'audit-planning.meetings.index',
     'audit-planning.annual-plan',
     'audit-execution.engagement',
     'audit-execution.questionnaire',
