@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/', 'dashboard')->name('dashboard');
 
+    Route::inertia('coming-soon', 'coming-soon')->name('coming-soon');
+
     Route::prefix('audit-planning')->name('audit-planning.')->group(function () {
         Route::inertia('strategic-plan', 'audit-planning/strategic-plan')->name('strategic-plan');
         Route::inertia('risk-assessment', 'audit-planning/risk-assessment')->name('risk-assessment');

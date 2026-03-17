@@ -1,19 +1,25 @@
 import { Link } from '@inertiajs/react';
 import {
-    BookOpen,
-    FolderGit2,
-    LayoutGrid,
-    Target,
-    ShieldAlert,
-    Users,
-    Calendar,
+    Activity,
+    BarChart,
     Briefcase,
+    Calendar,
     ClipboardList,
-    ListChecks,
-    Search,
+    Clock,
+    FileCheck,
     FileText,
-    Wrench,
-    RefreshCcw
+    Globe,
+    LayoutGrid,
+    ListChecks,
+    Network,
+    PieChart,
+    Plus,
+    RefreshCcw,
+    Search,
+    ShieldAlert,
+    ShieldCheck,
+    Target,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -28,7 +34,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, comingSoon } from '@/routes';
 import { strategicPlan, riskAssessment, meetings, annualPlan } from '@/routes/audit-planning';
 import { engagement, questionnaire, programme } from '@/routes/audit-execution';
 import { findings, draftReport } from '@/routes/audit-reporting';
@@ -41,78 +47,99 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
-];
 
-const auditPlanningItems: NavItem[] = [
-    {
-        title: 'Strategic Plan',
-        href: strategicPlan(),
-        icon: Target,
-    },
-    {
-        title: 'Risk Assessment',
-        href: riskAssessment(),
-        icon: ShieldAlert,
-    },
     {
         title: 'Meetings',
         href: meetings(),
         icon: Users,
-    },
-    {
-        title: 'Annual Plan',
-        href: annualPlan(),
-        icon: Calendar,
+        items: [
+            { title: 'Create Meeting', href: comingSoon() },
+            { title: 'Meeting Minutes', href: comingSoon() },
+        ],
     },
 ];
 
-const auditExecutionItems: NavItem[] = [
+
+const internalAuditItems: NavItem[] = [
     {
-        title: 'Engagement',
+        title: 'Planning',
+        href: strategicPlan(),
+        icon: Target,
+        items: [
+            { title: 'Strategic Plan', href: strategicPlan() },
+            { title: 'Annual Plan', href: annualPlan() },
+            { title: 'Risk Assessment', href: riskAssessment() },
+        ],
+    },
+    {
+        title: 'Execution',
         href: engagement(),
         icon: Briefcase,
+        items: [
+            { title: 'Engagement Memo', href: comingSoon() },
+            { title: 'Engagement Memorandum', href: comingSoon() },
+            { title: 'Questionnaire', href: questionnaire() },
+            { title: 'Programme', href: programme() },
+            { title: 'Uploads', href: comingSoon() },
+            { title: 'Draft Issues', href: comingSoon() },
+        ],
     },
     {
-        title: 'Questionnaire',
-        href: questionnaire(),
-        icon: ClipboardList,
-    },
-    {
-        title: 'Programme',
-        href: programme(),
-        icon: ListChecks,
-    },
-];
-
-const auditReportingItems: NavItem[] = [
-    {
-        title: 'Findings',
-        href: findings(),
-        icon: Search,
-    },
-    {
-        title: 'Draft Report',
+        title: 'Reports',
         href: draftReport(),
-        icon: FileText,
+        icon: BarChart,
     },
 ];
 
-const issueManagementItems: NavItem[] = [
+const auditFollowUpItems: NavItem[] = [
     {
-        title: 'Action Plans',
-        href: actionPlans(),
-        icon: Wrench,
-    },
-    {
-        title: 'Follow-up',
+        title: 'Issues',
         href: followUp(),
-        icon: RefreshCcw,
+        icon: ShieldAlert,
+    },
+    {
+        title: 'Workplan',
+        href: comingSoon(),
+        icon: Clock,
     },
 ];
 
-const footerNavItems: NavItem[] = [
 
+
+const otherItems: NavItem[] = [
+    {
+        title: 'Data Analytics',
+        href: comingSoon(),
+        icon: PieChart,
+    },
+    {
+        title: 'Risk Management',
+        href: comingSoon(),
+        icon: ShieldCheck,
+    },
+    {
+        title: 'Third-Party Risk Management',
+        href: comingSoon(),
+        icon: Globe,
+    },
+    {
+        title: 'Internal Controls',
+        href: comingSoon(),
+        icon: Activity,
+    },
+    {
+        title: 'Policy Compliance Management',
+        href: comingSoon(),
+        icon: Network,
+    },
+    {
+        title: 'Staff Directory',
+        href: comingSoon(),
+        icon: Users,
+    },
 ];
+
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     return (
@@ -131,10 +158,9 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} label="Platform" />
-                <NavMain items={auditPlanningItems} label="Audit Planning" />
-                <NavMain items={auditExecutionItems} label="Audit Execution" />
-                <NavMain items={auditReportingItems} label="Audit Reporting" />
-                <NavMain items={issueManagementItems} label="Issue Management" />
+                <NavMain items={internalAuditItems} label="Internal Audit" />
+                <NavMain items={auditFollowUpItems} label="Audit Follow-up" />
+                <NavMain items={otherItems} label="Governance & Compliance" />
             </SidebarContent>
 
             <SidebarFooter>
