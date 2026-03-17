@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\MinutesApproved;
+use App\Mail\MinutesSubmitted;
 use App\Models\Meeting;
 use App\Models\MeetingMinute;
 use App\Models\MeetingMinuteReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,7 +54,7 @@ class MeetingMinuteController extends Controller
         );
 
         if ($request->status === 'submitted') {
-            // Logic to notify reviewers
+            Mail::to($minute->meeting->user->email)->queue(new MinutesSubmitted($minute->meeting));
         }
 
         return redirect()->back()->with('success', 'Minutes saved successfully.');
@@ -81,6 +84,11 @@ class MeetingMinuteController extends Controller
             ]);
 
             $minute->meeting->update(['status' => 'approved']);
+
+            // Notify all attendees
+            foreach ($minute->meeting->attendees as $attendee) {
+                Mail::to($attendee->email)->queue(new MinutesApproved($minute->meeting));
+            }
         } else {
             $minute->update(['status' => 'draft']);
         }

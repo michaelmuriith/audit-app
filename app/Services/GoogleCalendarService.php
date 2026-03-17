@@ -36,7 +36,7 @@ class GoogleCalendarService
     public function createEvent(array $data): ?Event
     {
         try {
-            $event = new Event([
+            $eventData = [
                 'summary' => $data['title'],
                 'location' => $data['location'] ?? '',
                 'description' => $data['agenda'] ?? '',
@@ -48,15 +48,20 @@ class GoogleCalendarService
                     'dateTime' => Carbon::parse($data['end_time'])->toIso8601String(),
                     'timeZone' => config('app.timezone'),
                 ],
-                'conferenceData' => new ConferenceData([
+            ];
+
+            if ($this->calendarSupportsMeet()) {
+                $eventData['conferenceData'] = new ConferenceData([
                     'createRequest' => new CreateConferenceRequest([
                         'requestId' => uniqid(),
                         'conferenceSolutionKey' => new ConferenceSolutionKey([
                             'type' => 'hangoutsMeet',
                         ]),
                     ]),
-                ]),
-            ]);
+                ]);
+            }
+
+            $event = new Event($eventData);
 
             $calendarId = 'primary';
 
@@ -65,6 +70,27 @@ class GoogleCalendarService
             Log::error('Google Calendar Create Event Error: '.$e->getMessage());
 
             return null;
+        }
+    }
+
+    /**
+     * Check if the primary calendar supports Google Meet conferences.
+     */
+    protected function calendarSupportsMeet(): bool
+    {
+        try {
+            $calendar = $this->service->calendars->get('primary');
+            $conferenceProperties = $calendar->getConferenceProperties();
+
+            if (! $conferenceProperties) {
+                return false;
+            }
+
+            $allowedTypes = $conferenceProperties->getAllowedConferenceSolutionTypes();
+
+            return in_array('hangoutsMeet', $allowedTypes ?: []);
+        } catch (\Exception $e) {
+            return false;
         }
     }
 

@@ -85,13 +85,24 @@ test('can save meeting minutes as draft', function () {
 });
 
 test('can submit and approve meeting minutes', function () {
-    $meeting = Meeting::factory()->create(['user_id' => $this->user->id]);
+    Mail::fake();
+    $meeting = Meeting::factory()->has(App\Models\MeetingAttendee::factory()->count(2), 'attendees')->create(['user_id' => $this->user->id]);
     $minute = MeetingMinute::create([
         'meeting_id' => $meeting->id,
         'content' => ['some' => 'content'],
         'status' => 'submitted',
     ]);
 
+    // Test Submission notification (if store is used to submit)
+    $this->post(route('audit-planning.meetings.minutes.store'), [
+        'meeting_id' => $meeting->id,
+        'content' => ['some' => 'content'],
+        'status' => 'submitted',
+    ])->assertRedirect();
+
+    Mail::assertQueued(App\Mail\MinutesSubmitted::class);
+
+    // Test Approval notification
     $this->post(route('audit-planning.meetings.minutes.review', $minute), [
         'status' => 'approved',
         'comment' => 'Looks good',
@@ -104,6 +115,7 @@ test('can submit and approve meeting minutes', function () {
     ]);
 
     $this->assertEquals('approved', $meeting->fresh()->status);
+    Mail::assertQueued(App\Mail\MinutesApproved::class, 2);
 });
 
 test('can update a meeting without google_event_id and it syncs', function () {
