@@ -16,6 +16,27 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogDescription, 
+    DialogFooter, 
+    DialogHeader, 
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useState } from 'react';
+
+type Entity = {
+    id: number;
+    entity: string;
+    priority: string;
+    status: string;
+    year1: boolean;
+    year2: boolean;
+    year3: boolean;
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,7 +53,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const auditUniverse = [
+const initialAuditUniverse: Entity[] = [
     { id: 1, entity: 'Financial Operations', priority: 'High', status: 'Approved', year1: true, year2: false, year3: true },
     { id: 2, entity: 'IT Infrastructure', priority: 'Critical', status: 'Approved', year1: true, year2: true, year3: true },
     { id: 3, entity: 'HR Compliance', priority: 'Medium', status: 'Draft', year1: false, year2: true, year3: false },
@@ -41,6 +62,43 @@ const auditUniverse = [
 ];
 
 export default function StrategicPlan() {
+    const [entities, setEntities] = useState<Entity[]>(initialAuditUniverse);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // New Entity State
+    const [newEntity, setNewEntity] = useState({
+        name: '',
+        priority: 'Medium',
+        year1: false,
+        year2: false,
+        year3: false
+    });
+
+    const handleAddEntity = () => {
+        if (!newEntity.name) {
+            return;
+        }
+
+        const entityToAdd: Entity = {
+            id: Date.now(),
+            entity: newEntity.name,
+            priority: newEntity.priority,
+            status: 'Draft',
+            year1: newEntity.year1,
+            year2: newEntity.year2,
+            year3: newEntity.year3
+        };
+
+        setEntities([entityToAdd, ...entities]);
+        setNewEntity({
+            name: '',
+            priority: 'Medium',
+            year1: false,
+            year2: false,
+            year3: false
+        });
+        setIsModalOpen(false);
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Strategic Audit Plan" />
@@ -58,7 +116,10 @@ export default function StrategicPlan() {
                         <Button variant="outline" size="sm" className="hidden border-indigo-500/20 text-indigo-500 hover:bg-indigo-500/5 md:flex">
                             <Download className="mr-2 size-4" /> Export Plan
                         </Button>
-                        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
+                        <Button 
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+                            onClick={() => setIsModalOpen(true)}
+                        >
                             <Plus className="mr-2 size-4" /> Add Entity
                         </Button>
                     </div>
@@ -150,7 +211,7 @@ export default function StrategicPlan() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-sidebar-border/40">
-                                    {auditUniverse.map((item) => (
+                                    {entities.map((item) => (
                                         <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors">
                                             <td className="px-6 py-5 font-medium">{item.entity}</td>
                                             <td className="px-6 py-5">
@@ -194,6 +255,101 @@ export default function StrategicPlan() {
                         <CheckCircle2 className="mr-2 size-4" /> Submit for Approval
                     </Button>
                 </div>
+
+                {/* Add Entity Modal */}
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogContent className="sm:max-w-[500px] border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                                Add Auditable Entity
+                            </DialogTitle>
+                            <DialogDescription className="text-muted-foreground">
+                                Add a new auditable entity to the three-year strategic plan.
+                            </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="grid gap-6 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name" className="text-sm font-medium">Entity Name</Label>
+                                <Input 
+                                    id="name" 
+                                    placeholder="e.g. Finance Operations" 
+                                    className="bg-white/5 border-white/10 focus-visible:ring-indigo-500/50"
+                                    value={newEntity.name}
+                                    onChange={(e) => setNewEntity({ ...newEntity, name: e.target.value })}
+                                />
+                            </div>
+                            
+                            <div className="grid gap-2">
+                                <Label htmlFor="priority" className="text-sm font-medium">Risk Priority</Label>
+                                <Select 
+                                    value={newEntity.priority} 
+                                    onValueChange={(value) => setNewEntity({ ...newEntity, priority: value })}
+                                >
+                                    <SelectTrigger className="bg-white/5 border-white/10">
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Critical">Critical</SelectItem>
+                                        <SelectItem value="High">High</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid gap-3">
+                                <Label className="text-sm font-medium">Strategic Coverage</Label>
+                                <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Label htmlFor="year1" className="text-[10px] uppercase text-muted-foreground tracking-wider">Year 1</Label>
+                                        <Checkbox 
+                                            id="year1" 
+                                            checked={newEntity.year1}
+                                            onCheckedChange={(checked) => setNewEntity({ ...newEntity, year1: !!checked })}
+                                            className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Label htmlFor="year2" className="text-[10px] uppercase text-muted-foreground tracking-wider">Year 2</Label>
+                                        <Checkbox 
+                                            id="year2" 
+                                            checked={newEntity.year2}
+                                            onCheckedChange={(checked) => setNewEntity({ ...newEntity, year2: !!checked })}
+                                            className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Label htmlFor="year3" className="text-[10px] uppercase text-muted-foreground tracking-wider">Year 3</Label>
+                                        <Checkbox 
+                                            id="year3" 
+                                            checked={newEntity.year3}
+                                            onCheckedChange={(checked) => setNewEntity({ ...newEntity, year3: !!checked })}
+                                            className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setIsModalOpen(false)}
+                                className="border-white/10 hover:bg-white/5"
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                onClick={handleAddEntity}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-500/20"
+                                disabled={!newEntity.name}
+                            >
+                                Save Entity
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );
