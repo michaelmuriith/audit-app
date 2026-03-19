@@ -20,9 +20,9 @@ export default function ComingSoon() {
                         <Construction className="text-muted-foreground h-10 w-10" />
                     </div>
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-bold tracking-tight">Coming Soon</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Not Activitaed</h1>
                         <p className="text-muted-foreground max-w-[420px]">
-                            We're working hard to bring you this feature. Stay tuned for updates!
+                            This feature is not activated yet. Please contact the administrator for more information.
                         </p>
                     </div>
                 </div>
