@@ -68,7 +68,7 @@ export default function MeetingsIndex({ meetings, filters }: Props) {
         title: '',
         agenda: '',
         start_time: '',
-        end_time: '',
+        duration: '60',
         location: '',
         attendees: [] as string[],
     });
@@ -94,11 +94,14 @@ export default function MeetingsIndex({ meetings, filters }: Props) {
 
     const openEditModal = (meeting: Meeting) => {
         setEditingMeeting(meeting);
+        const diffMinutes = Math.round(
+            (new Date(meeting.end_time).getTime() - new Date(meeting.start_time).getTime()) / 60000
+        );
         setData({
             title: meeting.title,
             agenda: meeting.agenda || '',
-            start_time: meeting.start_time.split('.')[0].slice(0, 16), // Format for datetime-local
-            end_time: meeting.end_time.split('.')[0].slice(0, 16),
+            start_time: meeting.start_time.split('.')[0].slice(0, 16),
+            duration: String(diffMinutes || 60),
             location: meeting.location || '',
             attendees: meeting.attendees?.map(a => a.email) || [],
         });
@@ -209,14 +212,22 @@ export default function MeetingsIndex({ meetings, filters }: Props) {
                                     {errors.start_time && <p className="text-xs text-red-500">{errors.start_time}</p>}
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="end_time">End Time</Label>
-                                    <Input 
-                                        id="end_time" 
-                                        type="datetime-local" 
-                                        value={data.end_time} 
-                                        onChange={e => setData('end_time', e.target.value)}
-                                    />
-                                    {errors.end_time && <p className="text-xs text-red-500">{errors.end_time}</p>}
+                                    <Label htmlFor="duration">Duration</Label>
+                                    <select
+                                        id="duration"
+                                        value={data.duration}
+                                        onChange={e => setData('duration', e.target.value)}
+                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                        <option value="30">30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                        <option value="60">1 hour</option>
+                                        <option value="90">1.5 hours</option>
+                                        <option value="120">2 hours</option>
+                                        <option value="180">3 hours</option>
+                                        <option value="240">4 hours</option>
+                                    </select>
+                                    {errors.duration && <p className="text-xs text-red-500">{errors.duration}</p>}
                                 </div>
                             </div>
                             <div className="grid gap-2">

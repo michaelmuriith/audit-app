@@ -17,7 +17,7 @@ class StoreMeetingRequest extends FormRequest
             'title' => 'required|string|max:255',
             'agenda' => 'nullable|string',
             'start_time' => 'required|date|after:now',
-            'end_time' => 'required|date|after:start_time',
+            'duration' => 'required|integer|min:1|max:1440',
             'attendees' => 'required|array',
             'attendees.*' => 'required|email',
             'location' => 'nullable|string|max:255',

@@ -15,6 +15,9 @@ class MeetingAttendee extends Model
         'email',
         'user_id',
         'rsvp_status',
+        'name',
+        'designation',
+        'department',
     ];
 
     public function meeting(): BelongsTo

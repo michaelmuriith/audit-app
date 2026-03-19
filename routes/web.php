@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingMinuteController;
+use App\Http\Controllers\MeetingRsvpController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('meetings/{meeting}/rsvp', [MeetingRsvpController::class, 'show'])->name('meetings.rsvp');
+Route::post('meetings/{meeting}/rsvp', [MeetingRsvpController::class, 'store'])->name('meetings.rsvp.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/', 'dashboard')->name('dashboard');
@@ -16,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('meetings/minutes', [MeetingMinuteController::class, 'index'])->name('meetings.minutes.index');
         Route::resource('meetings', MeetingController::class);
         Route::get('meetings/{meeting}/minutes', [MeetingMinuteController::class, 'show'])->name('meetings.minutes.show');
+        Route::get('meetings/{meeting}/minutes/export', [MeetingMinuteController::class, 'export'])->name('meetings.minutes.export');
         Route::post('meetings/minutes', [MeetingMinuteController::class, 'store'])->name('meetings.minutes.store');
         Route::post('meeting-minutes/{minute}/review', [MeetingMinuteController::class, 'review'])->name('meetings.minutes.review');
 

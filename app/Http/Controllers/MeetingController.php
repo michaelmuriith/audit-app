@@ -9,6 +9,7 @@ use App\Models\Meeting;
 use App\Models\MeetingAttendee;
 use App\Models\User;
 use App\Services\GoogleCalendarService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -39,7 +40,8 @@ class MeetingController extends Controller
     {
         $data = $request->validated();
         $data['user_id'] = $request->user()->id;
-
+        $data['end_time'] = Carbon::parse($data['start_time'])->addMinutes((int) $data['duration']);
+        unset($data['duration']);
         // Create Google Event
         $googleEvent = $this->googleCalendar->createEvent($data);
 
@@ -69,6 +71,12 @@ class MeetingController extends Controller
     public function update(UpdateMeetingRequest $request, Meeting $meeting)
     {
         $data = $request->validated();
+
+        if (isset($data['duration'])) {
+            $startTime = isset($data['start_time']) ? $data['start_time'] : $meeting->start_time;
+            $data['end_time'] = Carbon::parse($startTime)->addMinutes((int) $data['duration']);
+            unset($data['duration']);
+        }
 
         // Sync with Google Calendar if relevant fields changed
         if (isset($data['start_time']) || isset($data['title']) || isset($data['attendees'])) {

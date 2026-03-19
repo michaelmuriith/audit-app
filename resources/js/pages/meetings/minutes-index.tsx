@@ -1,11 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { 
-    FileText, 
-    Search, 
-    Calendar, 
-    Clock, 
+import {
+    FileText,
+    Search,
+    Calendar,
+    Clock,
     ChevronRight,
     CheckCircle2,
     AlertCircle,
@@ -77,7 +77,7 @@ export default function MinutesIndex({ meetings, filters }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Meeting Minutes" />
-            
+
             <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -91,8 +91,8 @@ export default function MinutesIndex({ meetings, filters }: Props) {
                     <CardContent className="p-4">
                         <div className="relative max-w-md">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search by meeting title..." 
+                            <Input
+                                placeholder="Search by meeting title..."
                                 className="pl-9 h-10 bg-sidebar/50"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -108,8 +108,8 @@ export default function MinutesIndex({ meetings, filters }: Props) {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-2">
                                         {getStatusIcon(meeting.minutes?.status)}
-                                        <h3 className="font-bold text-lg leading-none group-hover:text-indigo-400 transition-colors truncate">
-                                            {meeting.title}
+                                        <h3 className="font-bold text-lg leading-none group-hover:text-indigo-400 transition-colors">
+                                            Minutes of {meeting.title} held on {format(new Date(meeting.start_time), 'PPP')} at {format(new Date(meeting.start_time), 'p')}
                                         </h3>
                                         <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tighter ml-auto md:ml-0">
                                             {meeting.id}

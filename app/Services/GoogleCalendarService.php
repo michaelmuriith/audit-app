@@ -25,7 +25,9 @@ class GoogleCalendarService
         $this->client->setAccessType('offline');
 
         // If we are using a Service Account, we might need to impersonate a user
-        // $this->client->setSubject(config('services.google.calendar_owner'));
+        if ($owner = config('services.google.calendar_owner')) {
+            $this->client->setSubject($owner);
+        }
 
         $this->service = new Calendar($this->client);
     }

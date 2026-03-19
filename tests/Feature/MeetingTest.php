@@ -48,7 +48,7 @@ test('can create a meeting', function () {
         'title' => 'Test Meeting',
         'agenda' => 'Test Agenda',
         'start_time' => now()->addDay()->toIso8601String(),
-        'end_time' => now()->addDay()->addHour()->toIso8601String(),
+        'duration' => 60,
         'attendees' => ['attendee1@example.com', 'attendee2@example.com'],
         'location' => 'Board Room',
     ];

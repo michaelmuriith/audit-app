@@ -7,6 +7,7 @@ use App\Mail\MinutesSubmitted;
 use App\Models\Meeting;
 use App\Models\MeetingMinute;
 use App\Models\MeetingMinuteReview;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -58,6 +59,19 @@ class MeetingMinuteController extends Controller
         }
 
         return redirect()->back()->with('success', 'Minutes saved successfully.');
+    }
+
+    public function export(Meeting $meeting)
+    {
+        $meeting->load(['minutes.approvedBy', 'attendees.user']);
+
+        $pdf = Pdf::loadView('pdf.entrance-minutes', [
+            'meeting' => $meeting,
+            'minutes' => $meeting->minutes,
+            'content' => $meeting->minutes?->content ?? [],
+        ]);
+
+        return $pdf->download("Minutes_{$meeting->id}.pdf");
     }
 
     public function review(Request $request, MeetingMinute $minute)

@@ -17,7 +17,7 @@ class UpdateMeetingRequest extends FormRequest
             'title' => 'sometimes|string|max:255',
             'agenda' => 'nullable|string',
             'start_time' => 'sometimes|date|after_or_equal:now',
-            'end_time' => 'sometimes|date|after:start_time',
+            'duration' => 'sometimes|integer|min:1|max:1440',
             'attendees' => 'sometimes|array',
             'attendees.*' => 'required|email',
             'location' => 'nullable|string|max:255',
