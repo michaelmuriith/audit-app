@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AuditableEntityController;
+use App\Http\Controllers\AuditEngagementController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingMinuteController;
 use App\Http\Controllers\MeetingRsvpController;
@@ -14,7 +16,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('coming-soon', 'coming-soon')->name('coming-soon');
 
     Route::prefix('audit-planning')->name('audit-planning.')->group(function () {
-        Route::inertia('strategic-plan', 'audit-planning/strategic-plan')->name('strategic-plan');
+        Route::get('strategic-plan', [AuditableEntityController::class, 'index'])->name('strategic-plan');
+        Route::post('strategic-plan', [AuditableEntityController::class, 'store'])->name('strategic-plan.store');
+        Route::put('strategic-plan/{strategicPlan}', [AuditableEntityController::class, 'update'])->name('strategic-plan.update');
+        Route::delete('strategic-plan/{strategicPlan}', [AuditableEntityController::class, 'destroy'])->name('strategic-plan.destroy');
+        Route::post('strategic-plan/submit', [AuditableEntityController::class, 'submit'])->name('strategic-plan.submit');
+
+        Route::get('annual-plan', [AuditEngagementController::class, 'index'])->name('annual-plan');
+        Route::post('annual-plan', [AuditEngagementController::class, 'store'])->name('annual-plan.store');
+        Route::put('annual-plan/{annualPlan}', [AuditEngagementController::class, 'update'])->name('annual-plan.update');
+        Route::delete('annual-plan/{annualPlan}', [AuditEngagementController::class, 'destroy'])->name('annual-plan.destroy');
+
         Route::inertia('risk-assessment', 'audit-planning/risk-assessment')->name('risk-assessment');
 
         Route::get('meetings/minutes', [MeetingMinuteController::class, 'index'])->name('meetings.minutes.index');
@@ -23,8 +35,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('meetings/{meeting}/minutes/export', [MeetingMinuteController::class, 'export'])->name('meetings.minutes.export');
         Route::post('meetings/minutes', [MeetingMinuteController::class, 'store'])->name('meetings.minutes.store');
         Route::post('meeting-minutes/{minute}/review', [MeetingMinuteController::class, 'review'])->name('meetings.minutes.review');
-
-        Route::inertia('annual-plan', 'audit-planning/annual-plan')->name('annual-plan');
     });
 
     Route::prefix('audit-execution')->name('audit-execution.')->group(function () {
