@@ -18,6 +18,7 @@ class AuditEngagement extends Model
         'end_date',
         'status',
         'fiscal_year',
+        'description',
     ];
 
     protected function casts(): array

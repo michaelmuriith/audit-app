@@ -57,6 +57,7 @@ type Auditor = {
 type AuditableEntity = {
     id: number;
     name: string;
+    residual_risk_score?: number;
 };
 
 type Engagement = {
@@ -70,6 +71,7 @@ type Engagement = {
     lead_auditor_id: number | null;
     auditable_entity?: {
         name: string;
+        residual_risk_score?: number;
     };
     lead_auditor?: {
         name: string;
@@ -256,7 +258,12 @@ export default function AnnualPlan({ engagements, auditors, entities, filters }:
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {entities.map(e => (
-                                                    <SelectItem key={e.id} value={e.id.toString()}>{e.name}</SelectItem>
+                                                    <SelectItem key={e.id} value={e.id.toString()}>
+                                                        <div className="flex items-center justify-between w-full gap-8">
+                                                            <span>{e.name}</span>
+                                                            <Badge variant="outline" className="text-[9px] font-mono opacity-60">Risk: {Math.round(e.residual_risk_score || 0)}</Badge>
+                                                        </div>
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -359,7 +366,7 @@ export default function AnnualPlan({ engagements, auditors, entities, filters }:
                             <TableHeader className="bg-muted/50">
                                 <TableRow className="border-sidebar-border/30 hover:bg-transparent">
                                     <TableHead className="w-[300px] text-[11px] uppercase tracking-wider font-bold">Engagement Name</TableHead>
-                                    <TableHead className="text-[11px] uppercase tracking-wider font-bold">Entity</TableHead>
+                                    <TableHead className="text-[11px] uppercase tracking-wider font-bold">Risk Priority</TableHead>
                                     <TableHead className="text-[11px] uppercase tracking-wider font-bold">Lead Auditor</TableHead>
                                     <TableHead className="text-[11px] uppercase tracking-wider font-bold">Timeline</TableHead>
                                     <TableHead className="text-[11px] uppercase tracking-wider font-bold text-center">Status</TableHead>
@@ -371,9 +378,24 @@ export default function AnnualPlan({ engagements, auditors, entities, filters }:
                                     <TableRow key={eng.id} className="border-sidebar-border/20 group hover:bg-white/[0.02]">
                                         <TableCell>
                                             <div className="font-semibold text-foreground group-hover:text-indigo-400 transition-colors">{eng.name}</div>
-                                            <div className="text-[10px] text-muted-foreground font-mono">ENG-{eng.id.toString().padStart(4, '0')}</div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <div className="text-[10px] text-muted-foreground font-mono">ENG-{eng.id.toString().padStart(4, '0')}</div>
+                                                <div className="size-1 rounded-full bg-muted-foreground/30" />
+                                                <span className="text-[10px] text-muted-foreground uppercase">{eng.auditable_entity?.name || 'N/A'}</span>
+                                            </div>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground text-sm">{eng.auditable_entity?.name || 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <Badge className={`
+                                                    w-fit text-[10px]
+                                                    ${(eng.auditable_entity?.residual_risk_score || 0) >= 15 ? 'bg-red-500 shadow-lg shadow-red-500/20' : ''}
+                                                    ${(eng.auditable_entity?.residual_risk_score || 0) >= 8 && (eng.auditable_entity?.residual_risk_score || 0) < 15 ? 'bg-orange-500' : ''}
+                                                    ${(eng.auditable_entity?.residual_risk_score || 0) < 8 ? 'bg-emerald-500' : ''}
+                                                `}>
+                                                    Risk: {Math.round(eng.auditable_entity?.residual_risk_score || 0)}
+                                                </Badge>
+                                            </div>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="size-6 rounded-full bg-indigo-500/10 flex items-center justify-center text-[10px] border border-indigo-500/20">

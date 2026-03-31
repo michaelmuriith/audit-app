@@ -1,21 +1,67 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { 
-    AlertTriangle, 
-    ArrowRight, 
-    Zap, 
-    Activity, 
+import {
+    AlertTriangle,
+    ArrowRight,
+    Zap,
+    Activity,
     Info,
     LayoutGrid,
     Search,
     SlidersHorizontal,
-    Plus
+    Plus,
+    Edit2,
+    Trash2,
+    Target
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useState } from 'react';
+import AuditPlanning from '@/routes/audit-planning';
+
+type Entity = {
+    id: number;
+    name: string;
+};
+
+type Risk = {
+    id: number;
+    name: string;
+    category: 'Technology' | 'Financial' | 'Compliance' | 'Operational' | 'Strategic';
+    likelihood: number;
+    impact: number;
+    control_effectiveness: number;
+    inherent_score: number;
+    residual_score: number;
+    auditable_entity_id: number;
+    auditable_entity?: Entity;
+    description?: string;
+    mitigations?: string;
+};
+
+interface RiskAssessmentProps {
+    risks: Risk[];
+    entities: Entity[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,19 +78,80 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const risks = [
-    { id: 1, name: 'Cybersecurity Data Breach', department: 'IT', likelihood: 2, impact: 5, rating: 10, category: 'Technology' },
-    { id: 2, name: 'Financial Misstatement', department: 'Finance', likelihood: 3, impact: 4, rating: 12, category: 'Financial' },
-    { id: 3, name: 'Regulatory Non-Compliance', department: 'Legal', likelihood: 4, impact: 4, rating: 16, category: 'Compliance' },
-    { id: 4, name: 'Supply Chain Disruption', department: 'Operations', likelihood: 3, impact: 3, rating: 9, category: 'Operational' },
-    { id: 5, name: 'Talent Retention', department: 'HR', likelihood: 5, impact: 2, rating: 10, category: 'Strategic' },
-];
+export default function RiskAssessment({ risks, entities }: RiskAssessmentProps) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingRisk, setEditingRisk] = useState<Risk | null>(null);
 
-export default function RiskAssessment() {
+    const { data, setData, post, put, processing, reset, errors } = useForm({
+        name: '',
+        category: 'Technology',
+        likelihood: 1,
+        impact: 1,
+        control_effectiveness: 1,
+        auditable_entity_id: '',
+        description: '',
+        mitigations: '',
+    });
+
+    const handleSaveRisk = () => {
+        if (editingRisk) {
+            put(AuditPlanning.riskAssessment.update(editingRisk.id).url, {
+                onSuccess: () => {
+                    setIsModalOpen(false);
+                    setEditingRisk(null);
+                    reset();
+                },
+            });
+        } else {
+            post(AuditPlanning.riskAssessment.store().url, {
+                onSuccess: () => {
+                    setIsModalOpen(false);
+                    reset();
+                },
+            });
+        }
+    };
+
+    const handleEdit = (risk: Risk) => {
+        setEditingRisk(risk);
+        setData({
+            name: risk.name,
+            category: risk.category,
+            likelihood: risk.likelihood,
+            impact: risk.impact,
+            control_effectiveness: risk.control_effectiveness,
+            auditable_entity_id: (risk.auditable_entity_id || '').toString(),
+            description: risk.description || '',
+            mitigations: risk.mitigations || '',
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm('Are you sure you want to remove this risk entry?')) {
+            router.delete(AuditPlanning.riskAssessment.destroy(id).url);
+        }
+    };
+
+    // Calculate Heat Map Data
+    const [viewMode, setViewMode] = useState<'inherent' | 'residual'>('inherent');
+
+    const getRisksAt = (likelihood: number, impact: number) => {
+        return risks.filter(r => {
+            if (viewMode === 'inherent') {
+                return r.likelihood === likelihood && r.impact === impact;
+            }
+            // Logic for residual grid positioning if needed, 
+            // but usually Heat Map shows Inherent. 
+            // PSASB often wants both.
+            return r.likelihood === likelihood && r.impact === impact;
+        });
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Risk Assessment" />
-            
+
             <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
                 {/* Page Header */}
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -52,7 +159,14 @@ export default function RiskAssessment() {
                         <h2 className="text-3xl font-bold tracking-tight">Risk Assessment & Heat Map</h2>
                         <p className="text-muted-foreground">Identify, analyze, and prioritize organizational risks.</p>
                     </div>
-                    <Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/20">
+                    <Button
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/20"
+                        onClick={() => {
+                            setEditingRisk(null);
+                            reset();
+                            setIsModalOpen(true);
+                        }}
+                    >
                         <Plus className="mr-2 size-4" /> New Risk Entry
                     </Button>
                 </div>
@@ -75,6 +189,7 @@ export default function RiskAssessment() {
                                 {/* Map Grid (5x5) */}
                                 {[5, 4, 3, 2, 1].map((likelihood) => (
                                     [1, 2, 3, 4, 5].map((impact) => {
+                                        const risksAtNode = getRisksAt(likelihood, impact);
                                         const rating = likelihood * impact;
                                         let bgColor = 'bg-muted/10';
                                         if (rating >= 15) bgColor = 'bg-red-500/30 border-red-500/50';
@@ -83,19 +198,20 @@ export default function RiskAssessment() {
                                         else bgColor = 'bg-emerald-500/30 border-emerald-500/50';
 
                                         return (
-                                            <div 
+                                            <div
                                                 key={`${likelihood}-${impact}`}
                                                 className={`relative rounded-md border text-[9px] flex items-center justify-center font-bold overflow-visible
                                                     ${bgColor} transition-transform hover:scale-105 hover:z-10 group cursor-pointer
                                                 `}
                                             >
                                                 <span className="opacity-30 group-hover:opacity-100">{rating}</span>
-                                                {/* Risk Markers (Mock) */}
-                                                {rating === 16 && (
-                                                    <div className="absolute size-3 rounded-full bg-red-500 border-2 border-white shadow-lg animate-bounce" />
-                                                )}
-                                                {rating === 12 && (
-                                                    <div className="absolute size-3 rounded-full bg-orange-500 border-2 border-white shadow-lg" />
+                                                {/* Risk Markers */}
+                                                {risksAtNode.length > 0 && (
+                                                    <div className={`absolute size-3 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-[7px] text-white
+                                                        ${rating >= 15 ? 'bg-red-600 animate-pulse' : (rating >= 10 ? 'bg-orange-600' : (rating >= 5 ? 'bg-amber-600' : 'bg-emerald-600'))}
+                                                    `}>
+                                                        {risksAtNode.length > 1 ? risksAtNode.length : ''}
+                                                    </div>
                                                 )}
                                             </div>
                                         );
@@ -133,40 +249,75 @@ export default function RiskAssessment() {
                                 <table className="w-full text-left text-sm">
                                     <thead className="bg-muted/50 text-muted-foreground text-[11px] uppercase tracking-wider">
                                         <tr>
-                                            <th className="px-6 py-4 font-semibold">Risk Name</th>
-                                            <th className="px-6 py-4 font-semibold">Cat.</th>
-                                            <th className="px-6 py-4 text-center font-semibold">Likelihood</th>
-                                            <th className="px-6 py-4 text-center font-semibold">Impact</th>
-                                            <th className="px-6 py-4 text-center font-semibold">Score</th>
+                                            <th className="px-6 py-4 font-semibold text-[10px]">Risk Name</th>
+                                            <th className="px-6 py-4 font-semibold text-[10px]">Inherent Risk</th>
+                                            <th className="px-6 py-4 font-semibold text-[10px]">Control</th>
+                                            <th className="px-6 py-4 text-center font-semibold text-[10px]">Residual Risk</th>
                                             <th className="px-6 py-4"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-sidebar-border/30">
-                                        {risks.map((risk) => (
+                                        {risks.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-10 text-center text-muted-foreground italic">
+                                                    No risk entries found. Add your first risk to begin assessment.
+                                                </td>
+                                            </tr>
+                                        ) : risks.map((risk) => (
                                             <tr key={risk.id} className="group hover:bg-white/[0.02] transition-colors">
                                                 <td className="px-6 py-5">
-                                                    <div className="font-medium text-foreground">{risk.name}</div>
-                                                    <div className="text-xs text-muted-foreground">{risk.department}</div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-black text-[13px]">{risk.name}</span>
+                                                        <span className="text-[10px] text-indigo-400/80 font-medium uppercase tracking-tight">
+                                                            {risk.auditable_entity?.name || 'Unlinked Entity'}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <Badge variant="outline" className="text-[10px] font-normal border-indigo-500/20 bg-indigo-500/5">{risk.category}</Badge>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Badge variant="outline" className="border-indigo-500/20 text-indigo-400 font-mono text-[10px]">
+                                                            {(risk.likelihood * risk.impact)}
+                                                        </Badge>
+                                                        <div className="text-[8px] text-muted-foreground uppercase">{risk.likelihood} × {risk.impact}</div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Badge variant="outline" className={`
+                                                            text-[10px]
+                                                            ${risk.control_effectiveness >= 4 ? 'border-emerald-500/50 text-emerald-500' : ''}
+                                                            ${risk.control_effectiveness <= 2 ? 'border-red-500/50 text-red-500' : ''}
+                                                        `}>
+                                                            {risk.control_effectiveness}/5
+                                                        </Badge>
+                                                        <span className="text-[8px] text-muted-foreground uppercase">
+                                                            {risk.control_effectiveness === 5 ? 'Excellent' :
+                                                                risk.control_effectiveness === 4 ? 'Good' :
+                                                                    risk.control_effectiveness === 3 ? 'Fair' :
+                                                                        risk.control_effectiveness === 2 ? 'Weak' : 'Poor'}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-5 text-center">
-                                                    <RatingValue value={risk.likelihood} />
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Badge className={`
+                                                            ${risk.residual_score >= 15 ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : ''}
+                                                            ${risk.residual_score >= 10 && risk.residual_score < 15 ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : ''}
+                                                            ${risk.residual_score >= 5 && risk.residual_score < 10 ? 'bg-amber-500 text-white' : ''}
+                                                            ${risk.residual_score < 5 ? 'bg-emerald-500 text-white' : ''}
+                                                        `}>{Math.round(risk.residual_score)}</Badge>
+                                                        <div className="text-[8px] text-muted-foreground uppercase font-bold tracking-tighter">Net Exposure</div>
+                                                    </div>
                                                 </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <RatingValue value={risk.impact} />
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <Badge className={`
-                                                        ${risk.rating >= 15 ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : ''}
-                                                        ${risk.rating >= 10 && risk.rating < 15 ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : ''}
-                                                        ${risk.rating >= 5 && risk.rating < 10 ? 'bg-amber-500 text-white' : ''}
-                                                        ${risk.rating < 5 ? 'bg-emerald-500 text-white' : ''}
-                                                    `}>{risk.rating}</Badge>
-                                                </td>
-                                                <td className="px-6 py-5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="sm" className="text-indigo-400">Details</Button>
+                                                <td className="px-6 py-5 text-right whitespace-nowrap">
+                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button variant="ghost" size="icon" className="size-8 text-indigo-400" onClick={() => handleEdit(risk)}>
+                                                            <Edit2 className="size-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="size-8 text-red-400" onClick={() => handleDelete(risk.id)}>
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -187,15 +338,155 @@ export default function RiskAssessment() {
                             <div className="flex-1 text-center md:text-left">
                                 <h3 className="text-xl font-bold">Automatic Risk Scoring Engine</h3>
                                 <p className="text-muted-foreground mt-2 max-w-2xl">
-                                    Our system calculates risk magnitude based on the product of likelihood and impact, aligned with ISO 31000 standards. High-risk areas are automatically prioritized for the next audit cycle.
+                                    Our system calculates risk magnitude based on the product of likelihood and impact, aligned with ISO 31000 standards. These scores directly influence the **Strategic Plan** by highlighting high-priority auditable entities.
                                 </p>
                             </div>
-                            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">
-                                View Calculation Methodology <ArrowRight className="ml-2 size-4" />
+                            <Button
+                                variant="outline"
+                                className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                                onClick={() => router.get(AuditPlanning.strategicPlan.url())}
+                            >
+                                Open Strategic Plan <ArrowRight className="ml-2 size-4" />
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Risk Entry Modal */}
+                <Dialog open={isModalOpen} onOpenChange={(open) => {
+                    if (!open) { setEditingRisk(null); reset(); }
+                    setIsModalOpen(open);
+                }}>
+                    <DialogContent className="sm:max-w-[500px] border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                                {editingRisk ? 'Edit Risk Entry' : 'New Risk Entry'}
+                            </DialogTitle>
+                            <DialogDescription className="text-muted-foreground">
+                                Identify an organizational risk and link it to an auditable entity.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-5 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="risk-name" className="text-sm font-medium">Risk Name</Label>
+                                <Input
+                                    id="risk-name"
+                                    placeholder="e.g. Unauthorised System Access"
+                                    className="bg-white/5 border-white/10 focus-visible:ring-indigo-500/50"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                />
+                                {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Risk Category</Label>
+                                    <Select value={data.category} onValueChange={(v: any) => setData('category', v)}>
+                                        <SelectTrigger className="bg-white/5 border-white/10">
+                                            <SelectValue placeholder="Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Technology">Technology</SelectItem>
+                                            <SelectItem value="Financial">Financial</SelectItem>
+                                            <SelectItem value="Compliance">Compliance</SelectItem>
+                                            <SelectItem value="Operational">Operational</SelectItem>
+                                            <SelectItem value="Strategic">Strategic</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Mitigations / Controls in Place</Label>
+                                    <Input
+                                        placeholder="e.g. Automated login monitoring..."
+                                        className="bg-white/5 border-white/10"
+                                        value={data.mitigations}
+                                        onChange={(e) => setData('mitigations', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-medium">Link to Auditable Entity</Label>
+                                <Select value={data.auditable_entity_id} onValueChange={(v) => setData('auditable_entity_id', v)}>
+                                    <SelectTrigger className="bg-white/5 border-white/10">
+                                        <SelectValue placeholder="Select entity to point this risk to..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {entities.map(entity => (
+                                            <SelectItem key={entity.id} value={entity.id.toString()}>{entity.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.auditable_entity_id && <p className="text-xs text-red-500">{errors.auditable_entity_id}</p>}
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Likelihood</Label>
+                                    <div className="flex items-center gap-1.5">
+                                        {[1, 2, 3, 4, 5].map((val) => (
+                                            <button key={val} type="button" onClick={() => setData('likelihood', val)}
+                                                className={`size-8 rounded flex items-center justify-center text-xs font-bold transition-all
+                                                    ${data.likelihood === val ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/5 hover:bg-white/10 text-muted-foreground'}
+                                                `}>{val}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Impact</Label>
+                                    <div className="flex items-center gap-1.5">
+                                        {[1, 2, 3, 4, 5].map((val) => (
+                                            <button key={val} type="button" onClick={() => setData('impact', val)}
+                                                className={`size-8 rounded flex items-center justify-center text-xs font-bold transition-all
+                                                    ${data.impact === val ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/5 hover:bg-white/10 text-muted-foreground'}
+                                                `}>{val}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="pt-2 border-t border-indigo-500/10 mt-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <Label className="text-xs uppercase font-bold text-amber-500">Control Effectiveness</Label>
+                                            <span className="text-[10px] text-muted-foreground italic">1=Poor, 5=Excellent</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            {[1, 2, 3, 4, 5].map((val) => (
+                                                <button key={val} type="button" onClick={() => setData('control_effectiveness', val)}
+                                                    className={`size-8 rounded flex items-center justify-center text-xs font-bold transition-all
+                                                        ${data.control_effectiveness === val ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'bg-white/5 hover:bg-white/10 text-muted-foreground'}
+                                                    `}>{val}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-2 text-center p-2 rounded bg-indigo-500/10 mb-[-8px]">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Calculated Residual Risk: </span>
+                                    <span className="text-sm font-bold text-indigo-400">
+                                        {Math.round((data.likelihood * data.impact) * (1 - ((data.control_effectiveness - 1) * 0.2)))}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsModalOpen(false)}
+                                className="border-white/10 hover:bg-white/5"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSaveRisk}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-500/20"
+                                disabled={processing}
+                            >
+                                {processing ? 'Saving...' : (editingRisk ? 'Update Risk' : 'Save Risk')}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );
@@ -207,9 +498,9 @@ function RatingValue({ value }: { value: number }) {
             <span className="font-mono text-xs">{value}</span>
             <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((i) => (
-                    <div 
-                        key={i} 
-                        className={`size-1 rounded-full ${i <= value ? 'bg-indigo-500 shadow-[0_0_4px_rgba(99,102,241,0.5)]' : 'bg-muted/30'}`} 
+                    <div
+                        key={i}
+                        className={`size-1 rounded-full ${i <= value ? 'bg-indigo-500 shadow-[0_0_4px_rgba(99,102,241,0.5)]' : 'bg-muted/30'}`}
                     />
                 ))}
             </div>

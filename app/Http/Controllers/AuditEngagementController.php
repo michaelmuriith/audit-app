@@ -21,7 +21,14 @@ class AuditEngagementController extends Controller
             ->get();
 
         $auditors = User::all(['id', 'name', 'email']);
-        $entities = AuditableEntity::all();
+        $entities = AuditableEntity::query()
+            ->with(['risks'])
+            ->where('year1_planned', true)
+            ->get()
+            ->map(function ($entity) {
+                $entity->residual_risk_score = $entity->risks->sum('residual_score');
+                return $entity;
+            });
 
         return Inertia::render('audit-planning/annual-plan', [
             'engagements' => $engagements,

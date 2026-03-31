@@ -11,7 +11,9 @@ import {
     CheckCircle2,
     BarChart3,
     Edit2,
-    Trash2
+    Trash2,
+    AlertTriangle,
+    Target
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,12 @@ import { useForm, router } from '@inertiajs/react';
 import { useDebounce } from '@/hooks/use-debounce';
 import AuditPlanning from '@/routes/audit-planning';
 
+type Risk = {
+    id: number;
+    name: string;
+    score: number;
+};
+
 type Entity = {
     id: number;
     name: string;
@@ -42,6 +50,9 @@ type Entity = {
     year2_planned: boolean;
     year3_planned: boolean;
     description: string | null;
+    residual_risk_score?: number;
+    suggested_frequency?: 'Annual' | 'Bi-annual' | 'Tri-annual';
+    risks?: Risk[];
 };
 
 interface StrategicPlanProps {
@@ -76,6 +87,7 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
     const { data, setData, post, put, processing, reset, errors } = useForm({
         name: '',
         priority: 'Medium',
+        risk_frequency: 'Annual',
         year1_planned: false,
         year2_planned: false,
         year3_planned: false,
@@ -112,6 +124,7 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
         setData({
             name: entity.name,
             priority: entity.priority,
+            risk_frequency: 'Annual', // Default if not set
             year1_planned: !!entity.year1_planned,
             year2_planned: !!entity.year2_planned,
             year3_planned: !!entity.year3_planned,
@@ -187,36 +200,34 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
                     </div>
                 </div>
 
-                {/* Plan Overview Stats */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="border-sidebar-border/50 bg-sidebar/40 backdrop-blur-sm transition-all hover:border-indigo-500/30">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Auditable Entities</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{stats.total}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Found in audit universe</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-sidebar-border/50 bg-sidebar/40 backdrop-blur-sm transition-all hover:border-amber-500/30">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">High Risk Priority</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold text-amber-500">{stats.highRisk}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Requiring immediate attention</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-sidebar-border/50 bg-sidebar/40 backdrop-blur-sm transition-all hover:border-emerald-500/30">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Plan Status</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex items-center justify-between">
-                            <div className="text-3xl font-bold text-emerald-500">{stats.finalizing}%</div>
-                            <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Finalizing</Badge>
-                        </CardContent>
-                    </Card>
-                </div>
+                {/* Strategic Context / SWOT */}
+                <Card className="border-sidebar-border/50 bg-sidebar/20 backdrop-blur-md overflow-hidden">
+                    <CardHeader className="bg-white/5 border-b border-sidebar-border/20 py-3">
+                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                             <Target className="size-4 text-indigo-400" /> Strategic Context & Environmental Scan
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="grid md:grid-cols-4 divide-x divide-sidebar-border/20">
+                            <div className="p-4 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors">
+                                <h4 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Strengths</h4>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">Robust internal controls in core financial processes and highly skilled IT audit team.</p>
+                            </div>
+                            <div className="p-4 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
+                                <h4 className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-2">Weaknesses</h4>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">Limited budget for specialized forensic tools and high staff turnover in junior roles.</p>
+                            </div>
+                            <div className="p-4 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors">
+                                <h4 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2">Opportunities</h4>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">Implementation of new ERP system allows for real-time continuous auditing integration.</p>
+                            </div>
+                            <div className="p-4 bg-red-500/5 hover:bg-red-500/10 transition-colors">
+                                <h4 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2">Threats</h4>
+                                <p className="text-[11px] leading-relaxed text-muted-foreground">Increasing cyber-security threats in the sector and evolving regulatory compliance laws.</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Filters and Search */}
                 <Card className="border-sidebar-border/40 bg-sidebar/20 backdrop-blur-md">
@@ -278,9 +289,9 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-muted/50 text-muted-foreground">
                                     <tr>
-                                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Auditable Entity</th>
+                                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Audit Scope / Primary Risk</th>
+                                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Risk Score</th>
                                         <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Priority</th>
-                                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Status</th>
                                         <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-[11px]">{startYear}</th>
                                         <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-[11px]">{startYear + 1}</th>
                                         <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-[11px]">{endYear}</th>
@@ -290,7 +301,31 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
                                 <tbody className="divide-y divide-sidebar-border/40">
                                     {entities.map((item) => (
                                         <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors">
-                                            <td className="px-6 py-5 font-medium">{item.name}</td>
+                                            <td className="px-6 py-5">
+                                                <div className="font-bold text-white text-[13px]">
+                                                    {item.risks?.[0]?.name || item.name}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="text-[10px] uppercase text-indigo-400 font-bold tracking-tight">
+                                                        {item.risks?.[0] ? item.name : 'Unlinked Entity'}
+                                                    </span>
+                                                    <div className="size-1 rounded-full bg-sidebar-border/50 mx-1" />
+                                                    <div className={`size-1.5 rounded-full ${item.status === 'Approved' ? 'bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]' : 'bg-muted-foreground'}`} />
+                                                    <span className="text-[10px] uppercase text-muted-foreground tracking-tighter">{item.status}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1 items-center">
+                                                    <Badge className={`
+                                                        ${(item.residual_risk_score || 0) >= 15 ? 'bg-red-600 shadow-lg shadow-red-600/20' : ''}
+                                                        ${(item.residual_risk_score || 0) >= 8 && (item.residual_risk_score || 0) < 15 ? 'bg-orange-600 shadow-lg shadow-orange-600/20' : ''}
+                                                        ${(item.residual_risk_score || 0) < 8 ? 'bg-emerald-600' : ''}
+                                                    `}>{Math.round(item.residual_risk_score || 0)}</Badge>
+                                                    <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-tighter">
+                                                        {item.suggested_frequency}
+                                                    </span>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-5">
                                                 <Badge variant="outline" className={`
                                                     ${item.priority === 'Critical' ? 'border-red-500/50 text-red-500 bg-red-500/5' : ''}
@@ -298,12 +333,6 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
                                                     ${item.priority === 'Medium' ? 'border-amber-500/50 text-amber-500 bg-amber-500/5' : ''}
                                                     ${item.priority === 'Low' ? 'border-blue-500/50 text-blue-500 bg-blue-500/5' : ''}
                                                 `}>{item.priority}</Badge>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`size-1.5 rounded-full ${item.status === 'Approved' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
-                                                    {item.status}
-                                                </div>
                                             </td>
                                             <td className="px-6 py-5 text-center">
                                                 <YearIndicator active={item.year1_planned} />
@@ -394,8 +423,40 @@ export default function StrategicPlan({ entities, filters }: StrategicPlanProps)
                                 {errors.priority && <p className="text-xs text-red-500">{errors.priority}</p>}
                             </div>
 
-                            <div className="grid gap-3">
-                                <Label className="text-sm font-medium">Strategic Coverage</Label>
+                            <div className="grid gap-4">
+                                <Label className="text-sm font-medium">Strategic Coverage & Frequency</Label>
+                                
+                                {editingEntity?.suggested_frequency && (
+                                    <div className="flex items-center justify-between p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-2 rounded-full bg-indigo-500/20 text-indigo-400">
+                                                <BarChart3 className="size-4" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] uppercase font-bold text-indigo-400 leading-none">AI Risk Insight</span>
+                                                <span className="text-xs font-semibold">Suggested: {editingEntity.suggested_frequency}</span>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            className="h-7 text-[10px] uppercase font-bold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300"
+                                            onClick={() => {
+                                                const freq = editingEntity.suggested_frequency;
+                                                if (freq === 'Annual') {
+                                                    setData(d => ({ ...d, year1_planned: true, year2_planned: true, year3_planned: true, risk_frequency: 'Annual' }));
+                                                } else if (freq === 'Bi-annual') {
+                                                    setData(d => ({ ...d, year1_planned: true, year2_planned: false, year3_planned: true, risk_frequency: 'Bi-annual' }));
+                                                } else {
+                                                    setData(d => ({ ...d, year1_planned: false, year2_planned: false, year3_planned: true, risk_frequency: 'Tri-annual' }));
+                                                }
+                                            }}
+                                        >
+                                            Auto-Apply
+                                        </Button>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-3 gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
                                     <div className="flex flex-col items-center gap-2">
                                         <Label htmlFor="year1_planned" className="text-[10px] uppercase text-muted-foreground tracking-wider">Year 1</Label>

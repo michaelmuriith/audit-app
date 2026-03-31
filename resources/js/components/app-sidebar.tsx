@@ -36,7 +36,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, comingSoon } from '@/routes';
-import { strategicPlan, riskAssessment, annualPlan } from '@/routes/audit-planning';
+import auditPlanning, { strategicPlan, auditableEntities, riskAssessment, annualPlan } from '@/routes/audit-planning';
 import { engagement, questionnaire, programme } from '@/routes/audit-execution';
 import { findings, draftReport } from '@/routes/audit-reporting';
 import { actionPlans, followUp } from '@/routes/issue-management';
@@ -70,9 +70,10 @@ const mainNavItems: NavItem[] = [
                 href: strategicPlan().url,
                 icon: Target,
                 items: [
+                    { title: 'Auditable Entities', href: auditableEntities().url },
+                    { title: 'Risk Assessment', href: riskAssessment().url },
                     { title: 'Strategic Plan', href: strategicPlan().url },
                     { title: 'Annual Plan', href: annualPlan().url },
-                    { title: 'Risk Assessment', href: riskAssessment().url },
                 ],
             },
             {

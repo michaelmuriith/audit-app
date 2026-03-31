@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditableEntityController;
 use App\Http\Controllers\AuditEngagementController;
+use App\Http\Controllers\RiskController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingMinuteController;
 use App\Http\Controllers\MeetingRsvpController;
@@ -16,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('coming-soon', 'coming-soon')->name('coming-soon');
 
     Route::prefix('audit-planning')->name('audit-planning.')->group(function () {
+        Route::get('auditable-entities', [AuditableEntityController::class, 'universe'])->name('auditable-entities');
         Route::get('strategic-plan', [AuditableEntityController::class, 'index'])->name('strategic-plan');
         Route::post('strategic-plan', [AuditableEntityController::class, 'store'])->name('strategic-plan.store');
         Route::put('strategic-plan/{strategicPlan}', [AuditableEntityController::class, 'update'])->name('strategic-plan.update');
@@ -27,7 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('annual-plan/{annualPlan}', [AuditEngagementController::class, 'update'])->name('annual-plan.update');
         Route::delete('annual-plan/{annualPlan}', [AuditEngagementController::class, 'destroy'])->name('annual-plan.destroy');
 
-        Route::inertia('risk-assessment', 'audit-planning/risk-assessment')->name('risk-assessment');
+        Route::get('risk-assessment', [RiskController::class, 'index'])->name('risk-assessment');
+        Route::post('risk-assessment', [RiskController::class, 'store'])->name('risk-assessment.store');
+        Route::put('risk-assessment/{risk}', [RiskController::class, 'update'])->name('risk-assessment.update');
+        Route::delete('risk-assessment/{risk}', [RiskController::class, 'destroy'])->name('risk-assessment.destroy');
 
         Route::get('meetings/minutes', [MeetingMinuteController::class, 'index'])->name('meetings.minutes.index');
         Route::resource('meetings', MeetingController::class);

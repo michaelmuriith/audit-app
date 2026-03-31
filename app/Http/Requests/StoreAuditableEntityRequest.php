@@ -24,10 +24,15 @@ class StoreAuditableEntityRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
+            'sector' => 'nullable|string|max:255',
             'priority' => 'required|string|in:Critical,High,Medium,Low',
-            'year1_planned' => 'boolean',
-            'year2_planned' => 'boolean',
-            'year3_planned' => 'boolean',
+            'year1_planned' => 'nullable|boolean',
+            'year2_planned' => 'nullable|boolean',
+            'year3_planned' => 'nullable|boolean',
+            'last_audit_date' => 'nullable|date',
+            'last_audit_rating' => 'nullable|string|max:255',
+            'risk_frequency' => 'required|string|in:Annual,Bi-annual,Tri-annual',
             'description' => 'nullable|string',
         ];
     }
